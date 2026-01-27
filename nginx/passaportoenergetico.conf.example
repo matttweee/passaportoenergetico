@@ -1,0 +1,44 @@
+## Esempio Nginx reverse proxy (Ubuntu 24.04)
+## - Frontend: http://127.0.0.1:3000
+## - Backend:  http://127.0.0.1:8000
+##
+## Nota: per SSL usare certbot (vedi README).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name passaportoenergetico.it www.passaportoenergetico.it;
+
+    # Aumenta timeout per upload PDF (15MB)
+    client_max_body_size 20m;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /docs {
+        proxy_pass http://127.0.0.1:8000/docs;
+        proxy_set_header Host $host;
+    }
+
+    location /openapi.json {
+        proxy_pass http://127.0.0.1:8000/openapi.json;
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
