@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Passaporto Energetico",
-  description: "Diagnosi chiara della bolletta: 3 minuti, 0 impegno."
+  title: "Bollettometro 2030",
+  description: "La tua spesa è in linea con i tuoi vicini? Verifica la tua posizione nella zona."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -15,8 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="mx-auto max-w-4xl px-4 py-8">
           <header className="mb-10 flex items-center justify-between">
             <div>
-              <div className="text-sm text-zinc-300">Passaporto Energetico</div>
-              <div className="text-lg font-semibold tracking-tight">Diagnosi bolletta</div>
+              <div className="text-sm text-zinc-300">Bollettometro 2030</div>
+              <div className="text-lg font-semibold tracking-tight">Passaporto Energetico del Quartiere</div>
             </div>
             <div className="text-xs text-zinc-400">Privacy-first · Nessun marketing</div>
           </header>

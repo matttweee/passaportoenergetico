@@ -1,26 +1,28 @@
+"""DB session factory."""
 from __future__ import annotations
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 from functools import lru_cache
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 from app.core.config import get_settings
+from app.db.base import Base
+from app.db.models import *  # noqa: F401, F403
 
 
 @lru_cache
 def get_engine():
-    settings = get_settings()
-    return create_engine(settings.DATABASE_URL, pool_pre_ping=True)
-
-
-def reset_engine_cache() -> None:
-    get_engine.cache_clear()
+    return create_engine(get_settings().DATABASE_URL, pool_pre_ping=True, echo=False)
 
 
 def get_sessionmaker():
-    return sessionmaker(bind=get_engine(), autoflush=False, autocommit=False)
+    return sessionmaker(autocommit=False, autoflush=False, bind=get_engine())
 
 
-__all__ = ["get_engine", "reset_engine_cache", "get_sessionmaker"]
-
+def get_db() -> Session:
+    sm = get_sessionmaker()
+    db = sm()
+    try:
+        yield db
+    finally:
+        db.close()

@@ -1,33 +1,21 @@
-FROM python:3.12-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps: OCR + PDF rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    tesseract-ocr-ita \
-    poppler-utils \
-    curl \
-    gcc \
+    gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml /app/pyproject.toml
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir -e .
 
-RUN pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir .
+COPY app ./app
+COPY alembic.ini ./
+COPY alembic ./alembic
 
-COPY alembic.ini /app/alembic.ini
-COPY alembic /app/alembic
-COPY app /app/app
-COPY tests /app/tests
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-
+ENV PYTHONPATH=/app
 EXPOSE 8000
 
+COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
-
 CMD ["/app/docker-entrypoint.sh"]
-

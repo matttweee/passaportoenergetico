@@ -2,75 +2,88 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pe}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pe_password}
-      POSTGRES_DB: ${POSTGRES_DB:-passaporto_energetico}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: pe
+      POSTGRES_PASSWORD: pe_password
+      POSTGRES_DB: bollettometro
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U pe -d bollettometro"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 5
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://pe:pe_password@postgres:5432/passaporto_energetico}
-      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
-      LOCAL_STORAGE_PATH: ${LOCAL_STORAGE_PATH:-/data/uploads}
-      BASE_URL: ${BASE_URL:-http://localhost:8000}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-cambia-questa-password}
-      SECRET_KEY: ${SECRET_KEY:-cambia-questa-secret-key}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+psycopg2://pe:pe_password@postgres:5432/bollettometro
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      LOCAL_STORAGE_PATH: /data/uploads
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key}
+      BACKEND_URL: http://localhost:8000
+      BASE_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - backend_uploads:/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
+    command: /app/docker-entrypoint.sh
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://pe:pe_password@postgres:5432/bollettometro
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      LOCAL_STORAGE_PATH: /data/uploads
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key}
     volumes:
       - backend_uploads:/data/uploads
-      - ./backend/app:/app/app
-      - ./backend/alembic:/app/alembic
-      - ./backend/tests:/app/tests
-      - ./backend/alembic.ini:/app/alembic.ini
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]
-      interval: 5s
-      timeout: 3s
-      retries: 30
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker -l info
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
-      CHOKIDAR_USEPOLLING: "true"
-    depends_on:
-      backend:
-        condition: service_healthy
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/components:/app/components
-      - ./frontend/lib:/app/lib
-      - ./frontend/tailwind.config.ts:/app/tailwind.config.ts
-      - ./frontend/postcss.config.js:/app/postcss.config.js
-      - ./frontend/next.config.mjs:/app/next.config.mjs
-      - ./frontend/tsconfig.json:/app/tsconfig.json
-      - ./frontend/package.json:/app/package.json
-      - ./frontend/package-lock.json:/app/package-lock.json
-      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev
 
 volumes:
   postgres_data:
   backend_uploads:
-  frontend_node_modules:
-

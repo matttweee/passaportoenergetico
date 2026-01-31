@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: bollettometro
+Version: 0.1.0
+Summary: Bollettometro 2030 - API
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.109
+Requires-Dist: uvicorn[standard]>=0.27
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: psycopg2-binary>=2.9
+Requires-Dist: pydantic>=2
+Requires-Dist: pydantic-settings>=2
+Requires-Dist: python-multipart>=0.0.6
+Requires-Dist: redis>=5
+Requires-Dist: celery[redis]>=5.3
+Requires-Dist: openai>=1.0
+Requires-Dist: reportlab>=4.0
+Requires-Dist: qrcode[pil]>=7.4
+Requires-Dist: Pillow>=10
+Requires-Dist: pdfplumber>=0.10
+Requires-Dist: python-dateutil>=2.8
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+Requires-Dist: httpx>=0.26; extra == "dev"
+Requires-Dist: ruff>=0.1; extra == "dev"
+Requires-Dist: black>=24; extra == "dev"
