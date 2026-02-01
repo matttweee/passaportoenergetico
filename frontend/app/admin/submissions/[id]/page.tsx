@@ -7,9 +7,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { adminGetSubmission, adminUpdateStatus } from "@/lib/api";
-import type { AdminWorkflowStatus, SubmissionStatus } from "@/lib/types";
+import type { SubmissionStatus } from "@/lib/types";
 
 const ALLOWED_STATUSES = ["new", "reviewed", "contacted", "closed"] as const;
+type AdminWorkflowStatus = (typeof ALLOWED_STATUSES)[number];
 
 function isAdminWorkflowStatus(v: string): v is AdminWorkflowStatus {
   return (ALLOWED_STATUSES as readonly string[]).includes(v);
