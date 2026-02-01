@@ -15,6 +15,7 @@ COPY next.config.mjs tsconfig.json postcss.config.js tailwind.config.ts /app/
 COPY app /app/app
 COPY components /app/components
 COPY lib /app/lib
+COPY public /app/public
 RUN npm run build
 
 # Production
