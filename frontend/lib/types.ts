@@ -21,6 +21,14 @@ export type Report = {
   comparison_warning?: string | null;
 };
 
+export interface ResultResponse {
+  sessionId: string;
+  status: string;
+  session_status?: string | null;
+  reportUrl?: string;
+  summary?: string;
+}
+
 export type SubmissionCreated = {
   id: string;
 };
@@ -33,6 +41,9 @@ export type SubmissionStatus = {
   analysis_error: string | null;
   share_token: string | null;
 };
+
+/** Compat: status polling for analyze job (processing page). */
+export type StatusResponse = SubmissionStatus;
 
 export type AdminSubmissionListItem = {
   id: string;

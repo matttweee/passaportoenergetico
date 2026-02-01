@@ -6,12 +6,13 @@ import Link from "next/link";
 import { TrustBar } from "@/components/TrustBar";
 import { TrendChart } from "@/components/TrendChart";
 import { PassportCard } from "@/components/PassportCard";
+import type { ResultResponse } from "@/lib/types";
 import { api } from "@/lib/api";
 
 export default function ResultPage() {
   const params = useParams();
   const sessionId = params.sessionId as string;
-  const [data, setData] = useState<api.ResultResponse | null>(null);
+  const [data, setData] = useState<ResultResponse | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
