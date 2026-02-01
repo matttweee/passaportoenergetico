@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TrustBar } from "@/components/TrustBar";
 import { api } from "@/lib/api";
 import type { SubmissionStatus } from "@/lib/types";
 
-export default function ProcessingPage() {
+function ProcessingInner() {
   const searchParams = useSearchParams();
   const jobId = searchParams.get("job_id");
   const sessionId = searchParams.get("session_id");
@@ -62,5 +62,20 @@ export default function ProcessingPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ProcessingPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-zinc-950 text-zinc-100 p-6">
+        <TrustBar />
+        <div className="max-w-xl mx-auto pt-12 text-center">
+          <p className="text-zinc-400">Caricamento…</p>
+        </div>
+      </main>
+    }>
+      <ProcessingInner />
+    </Suspense>
   );
 }
