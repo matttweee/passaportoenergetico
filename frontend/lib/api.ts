@@ -88,7 +88,7 @@ export async function adminGetSubmission(id: string): Promise<AdminSubmissionDet
   return (await res.json()) as AdminSubmissionDetail;
 }
 
-export async function adminUpdateStatus(id: string, status: string): Promise<void> {
+export async function adminUpdateStatus(id: string, status: SubmissionStatus): Promise<void> {
   const res = await fetch(`${API_BASE}/admin/submissions/${id}/status`, {
     method: "POST",
     credentials: "include",

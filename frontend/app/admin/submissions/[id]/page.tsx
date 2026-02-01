@@ -35,6 +35,7 @@ export default function AdminSubmissionDetailPage() {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
   async function save() {
+    if (!status) return;
     setSaving(true);
     try {
       await adminUpdateStatus(id, status);
