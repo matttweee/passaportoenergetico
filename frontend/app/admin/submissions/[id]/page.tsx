@@ -7,13 +7,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { adminGetSubmission, adminUpdateStatus } from "@/lib/api";
+import type { SubmissionStatus } from "@/lib/types";
 
 export default function AdminSubmissionDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const [data, setData] = useState<any | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<SubmissionStatus | "">("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
