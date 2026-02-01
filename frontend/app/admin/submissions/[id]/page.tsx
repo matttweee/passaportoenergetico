@@ -100,8 +100,8 @@ export default function AdminSubmissionDetailPage() {
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <input
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            value={status === "" ? "" : String(status)}
+            onChange={(e) => setStatus(e.target.value as SubmissionStatus)}
             className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm"
             placeholder="new / reviewed / contacted / closed"
           />
