@@ -7,14 +7,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { adminGetSubmission, adminUpdateStatus } from "@/lib/api";
-import type { SubmissionStatus } from "@/lib/types";
+import type { AdminWorkflowStatus, SubmissionStatus } from "@/lib/types";
+
+const ALLOWED_STATUSES = ["new", "reviewed", "contacted", "closed"] as const;
+
+function isAdminWorkflowStatus(v: string): v is AdminWorkflowStatus {
+  return (ALLOWED_STATUSES as readonly string[]).includes(v);
+}
 
 export default function AdminSubmissionDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const [data, setData] = useState<any | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [status, setStatus] = useState<SubmissionStatus | "">("");
+  const [status, setStatus] = useState<AdminWorkflowStatus | "">("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -22,7 +28,10 @@ export default function AdminSubmissionDetailPage() {
       try {
         const d = await adminGetSubmission(id);
         setData(d);
-        setStatus(d.status);
+        const s = typeof d.status === "object" && d.status !== null && "status" in d.status
+          ? (d.status as SubmissionStatus).status
+          : String(d.status ?? "");
+        setStatus(isAdminWorkflowStatus(s) ? s : "");
       } catch (e: any) {
         setErr("Non autorizzato o submission non trovata.");
         setTimeout(() => {
@@ -35,7 +44,10 @@ export default function AdminSubmissionDetailPage() {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
   async function save() {
-    if (!status) return;
+    if (!status) {
+      setErr("Seleziona uno status valido");
+      return;
+    }
     setSaving(true);
     try {
       await adminUpdateStatus(id, status);
@@ -101,7 +113,10 @@ export default function AdminSubmissionDetailPage() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <input
             value={status === "" ? "" : String(status)}
-            onChange={(e) => setStatus(e.target.value as SubmissionStatus)}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              setStatus(isAdminWorkflowStatus(v) ? v : "");
+            }}
             className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm"
             placeholder="new / reviewed / contacted / closed"
           />
