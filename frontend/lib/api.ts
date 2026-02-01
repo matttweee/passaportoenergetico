@@ -94,3 +94,20 @@ export async function requestCorrection(token: string, payload: { message?: stri
   await apiFetch(`/report/${token}/lead`, { method: "POST", body: JSON.stringify(payload) });
 }
 
+// Wrapper object used by pages that import { api } from "@/lib/api"
+export const api = {
+  // public flow
+  createSubmission,
+  uploadFile,
+  analyze,
+  getStatus,
+  getReport,
+  requestCorrection,
+
+  // admin
+  adminLogin,
+  adminListSubmissions,
+  adminGetSubmission,
+  adminUpdateStatus,
+};
+
