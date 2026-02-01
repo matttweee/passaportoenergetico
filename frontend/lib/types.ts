@@ -71,7 +71,7 @@ export type AdminSubmissionFile = {
 export type AdminSubmissionDetail = {
   id: string;
   created_at: string;
-  status: string;
+  status: SubmissionStatus;
   email: string | null;
   phone: string | null;
   consent: boolean;
