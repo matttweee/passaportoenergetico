@@ -21,12 +21,51 @@ export type Report = {
   comparison_warning?: string | null;
 };
 
+/** Response from GET /api/result/:session_id (session flow). */
 export interface ResultResponse {
-  sessionId: string;
+  session_id: string;
+  position: string;
+  explanation_short: string;
+  user_trend_json: Record<string, unknown>;
+  zone_trend_json: Record<string, unknown>;
+  passport_pdf_url: string | null;
+  share_image_url: string | null;
+  share_token: string | null;
+}
+
+/** Response from POST /api/session/start. */
+export interface SessionStartResponse {
+  session_id: string;
+  next_step: string;
+}
+
+/** Response from POST /api/session/set-zone. */
+export interface SessionSetZoneResponse {
+  zone_key: string;
+  next_step: string;
+}
+
+/** Response from POST /api/analyze/start. */
+export interface AnalyzeStartResponse {
+  job_id: string;
   status: string;
-  session_status?: string | null;
-  reportUrl?: string;
-  summary?: string;
+}
+
+/** Response from POST /api/share/generate. */
+export interface ShareGenerateResponse {
+  share_image_url: string;
+  share_token: string;
+}
+
+/** Response from POST /api/passport/generate. */
+export interface PassportGenerateResponse {
+  pdf_url: string;
+  qr_token: string;
+}
+
+/** Response from POST /api/map/commit. */
+export interface MapCommitResponse {
+  ok: boolean;
 }
 
 export type SubmissionCreated = {
@@ -51,6 +90,9 @@ export interface AnalyzeStatusResponse {
   job_id?: string;
   session_id?: string;
 }
+
+/** Admin workflow status (string union for UI + validation). */
+export type AdminWorkflowStatus = "new" | "reviewed" | "contacted" | "closed";
 
 export type AdminSubmissionListItem = {
   id: string;
