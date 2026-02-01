@@ -2,6 +2,7 @@ import type {
   AdminSubmissionDetail,
   AdminSubmissionListItem,
   Report,
+  StatusResponse,
   SubmissionCreated,
   SubmissionStatus,
 } from "./types";
@@ -53,6 +54,13 @@ export async function getStatus(submissionId: string): Promise<SubmissionStatus>
   return apiFetch<SubmissionStatus>(`/submissions/${submissionId}/status`);
 }
 
+// analyzeStatus (compat: used by processing page)
+export async function analyzeStatus(jobId: string, sessionId: string): Promise<StatusResponse> {
+  return apiFetch<StatusResponse>(`/analyze/${jobId}/status?sessionId=${encodeURIComponent(sessionId)}`, {
+    method: "GET",
+  });
+}
+
 export async function getReport(token: string): Promise<Report> {
   return apiFetch<Report>(`/report/${token}`, { cache: "no-store" as any });
 }
@@ -100,6 +108,7 @@ export const api = {
   createSubmission,
   uploadFile,
   analyze,
+  analyzeStatus,
   getStatus,
   getReport,
   requestCorrection,
