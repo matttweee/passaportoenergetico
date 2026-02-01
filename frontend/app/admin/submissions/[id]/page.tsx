@@ -49,9 +49,11 @@ export default function AdminSubmissionDetailPage() {
       setErr("Seleziona uno status valido");
       return;
     }
+    if (!data) return;
     setSaving(true);
     try {
-      await adminUpdateStatus(id, status);
+      const payload: SubmissionStatus = { ...data.status, status };
+      await adminUpdateStatus(id, payload);
       const d = await adminGetSubmission(id);
       setData(d);
     } catch {
