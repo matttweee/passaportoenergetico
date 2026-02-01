@@ -45,6 +45,13 @@ export type SubmissionStatus = {
 /** Compat: status polling for analyze job (processing page). */
 export type StatusResponse = SubmissionStatus;
 
+export interface AnalyzeStatusResponse {
+  status: SubmissionStatus;
+  session_status?: string | null;
+  job_id?: string;
+  session_id?: string;
+}
+
 export type AdminSubmissionListItem = {
   id: string;
   created_at: string;

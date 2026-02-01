@@ -1,8 +1,8 @@
 import type {
   AdminSubmissionDetail,
   AdminSubmissionListItem,
+  AnalyzeStatusResponse,
   Report,
-  StatusResponse,
   SubmissionCreated,
   SubmissionStatus,
 } from "./types";
@@ -55,8 +55,8 @@ export async function getStatus(submissionId: string): Promise<SubmissionStatus>
 }
 
 // analyzeStatus (compat: used by processing page)
-export async function analyzeStatus(jobId: string, sessionId: string): Promise<StatusResponse> {
-  return apiFetch<StatusResponse>(`/analyze/${jobId}/status?sessionId=${encodeURIComponent(sessionId)}`, {
+export async function analyzeStatus(jobId: string, sessionId: string): Promise<AnalyzeStatusResponse> {
+  return apiFetch<AnalyzeStatusResponse>(`/analyze/${jobId}/status?sessionId=${encodeURIComponent(sessionId)}`, {
     method: "GET",
   });
 }
