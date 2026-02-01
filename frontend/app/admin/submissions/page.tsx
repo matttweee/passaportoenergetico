@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 
 import { Card } from "@/components/Card";
 import { adminListSubmissions } from "@/lib/api";
+import type { AdminSubmissionListItem } from "@/lib/types";
 
 export default function AdminSubmissionsPage() {
-  const [items, setItems] = useState<any[] | null>(null);
+  const [items, setItems] = useState<AdminSubmissionListItem[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {

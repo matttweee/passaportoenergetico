@@ -1,140 +1,96 @@
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import type {
+  AdminSubmissionDetail,
+  AdminSubmissionListItem,
+  Report,
+  SubmissionCreated,
+  SubmissionStatus,
+} from "./types";
 
-async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+/** In production (nginx) use same-origin "/api". In dev can override with NEXT_PUBLIC_API_BASE_URL. */
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = path.startsWith("http") ? path : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  const res = await fetch(url, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {})
+    }
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error((err as { detail?: string }).detail || res.statusText);
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `Errore ${res.status}`);
   }
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
-async function fetchForm(path: string, form: FormData): Promise<unknown> {
-  const res = await fetch(`${BASE}${path}`, {
+export async function createSubmission(payload: { email?: string; phone?: string; consent: boolean }): Promise<SubmissionCreated> {
+  return apiFetch<SubmissionCreated>("/submissions", {
     method: "POST",
-    body: form,
+    body: JSON.stringify({ ...payload, expected_kinds: ["latest", "older"] })
+  });
+}
+
+export async function uploadFile(submissionId: string, kind: "latest" | "older", file: File): Promise<void> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE}/submissions/${submissionId}/files?kind=${kind}`, {
+    method: "POST",
+    body: form
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error((err as { detail?: string }).detail || res.statusText);
-  }
-  return res.json();
-}
-
-export namespace api {
-  export interface StartResponse {
-    session_id: string;
-    next_step: string;
-  }
-  export interface SetZoneResponse {
-    zone_key: string;
-    next_step: string;
-  }
-  export interface UploadResponse {
-    doc_id: string;
-    file_path: string;
-  }
-  export interface StartAnalysisResponse {
-    job_id: string;
-    status: string;
-  }
-  export interface StatusResponse {
-    job_id: string;
-    status: string;
-    session_status: string | null;
-  }
-  export interface ResultResponse {
-    session_id: string;
-    position: string;
-    explanation_short: string;
-    user_trend_json: Record<string, unknown>;
-    zone_trend_json: Record<string, unknown>;
-    passport_pdf_url: string | null;
-    share_image_url: string | null;
-    share_token: string | null;
-  }
-  export interface PassportGenerateResponse {
-    pdf_url: string;
-    qr_token: string;
-  }
-  export interface ShareGenerateResponse {
-    share_image_url: string;
-    share_token: string;
-  }
-
-  export async function sessionStart(): Promise<StartResponse> {
-    return fetchApi<StartResponse>("/api/session/start", { method: "POST" });
-  }
-  export async function sessionSetZone(sessionId: string, cap: string): Promise<boolean> {
-    try {
-      await fetchApi<SetZoneResponse>("/api/session/set-zone", {
-        method: "POST",
-        body: JSON.stringify({ session_id: sessionId, cap }),
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  export async function upload(sessionId: string, docType: string, file: File): Promise<UploadResponse> {
-    const form = new FormData();
-    form.append("session_id", sessionId);
-    form.append("doc_type", docType);
-    form.append("file", file);
-    return fetchForm("/api/upload", form) as Promise<UploadResponse>;
-  }
-  export async function analyzeStart(sessionId: string): Promise<StartAnalysisResponse | null> {
-    try {
-      return await fetchApi<StartAnalysisResponse>("/api/analyze/start", {
-        method: "POST",
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-    } catch {
-      return null;
-    }
-  }
-  export async function analyzeStatus(jobId: string, sessionId: string): Promise<StatusResponse> {
-    return fetchApi<StatusResponse>(`/api/analyze/status/${jobId}?session_id=${encodeURIComponent(sessionId)}`);
-  }
-  export async function getResult(sessionId: string, token?: string): Promise<ResultResponse> {
-    const q = token ? `?t=${encodeURIComponent(token)}` : "";
-    return fetchApi<ResultResponse>(`/api/result/${sessionId}${q}`);
-  }
-  export async function passportGenerate(sessionId: string): Promise<PassportGenerateResponse | null> {
-    try {
-      return await fetchApi<PassportGenerateResponse>("/api/passport/generate", {
-        method: "POST",
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-    } catch {
-      return null;
-    }
-  }
-  export async function shareGenerate(sessionId: string): Promise<ShareGenerateResponse | null> {
-    try {
-      return await fetchApi<ShareGenerateResponse>("/api/share/generate", {
-        method: "POST",
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-    } catch {
-      return null;
-    }
-  }
-  export async function mapCommit(sessionId: string): Promise<boolean> {
-    try {
-      await fetchApi<{ ok: boolean }>("/api/map/commit", {
-        method: "POST",
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  export async function mapGet(zoneKey: string): Promise<{ zone_key: string; points: unknown[]; coverage_opacity: number }> {
-    return fetchApi(`/api/map/${encodeURIComponent(zoneKey)}`);
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `Upload fallito (${res.status})`);
   }
 }
+
+export async function analyze(submissionId: string): Promise<void> {
+  await apiFetch(`/submissions/${submissionId}/analyze`, { method: "POST" });
+}
+
+export async function getStatus(submissionId: string): Promise<SubmissionStatus> {
+  return apiFetch<SubmissionStatus>(`/submissions/${submissionId}/status`);
+}
+
+export async function getReport(token: string): Promise<Report> {
+  return apiFetch<Report>(`/report/${token}`, { cache: "no-store" as any });
+}
+
+// Admin
+export async function adminLogin(password: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password })
+  });
+  if (!res.ok) throw new Error("Login fallito");
+}
+
+export async function adminListSubmissions(): Promise<AdminSubmissionListItem[]> {
+  const res = await fetch(`${API_BASE}/admin/submissions`, { credentials: "include" });
+  if (!res.ok) throw new Error("Non autorizzato");
+  return (await res.json()) as AdminSubmissionListItem[];
+}
+
+export async function adminGetSubmission(id: string): Promise<AdminSubmissionDetail> {
+  const res = await fetch(`${API_BASE}/admin/submissions/${id}`, { credentials: "include" });
+  if (!res.ok) throw new Error("Non autorizzato");
+  return (await res.json()) as AdminSubmissionDetail;
+}
+
+export async function adminUpdateStatus(id: string, status: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/submissions/${id}/status`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+  if (!res.ok) throw new Error("Aggiornamento fallito");
+}
+
+export async function requestCorrection(token: string, payload: { message?: string; email?: string; phone?: string }): Promise<void> {
+  await apiFetch(`/report/${token}/lead`, { method: "POST", body: JSON.stringify(payload) });
+}
+
